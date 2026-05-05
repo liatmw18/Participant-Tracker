@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Participant Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #EEEDE9;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1A18;
+    --text-muted: #6B6B67;
+    --text-faint: #9B9B97;
+    --green-bg: #E4F2E8;
+    --green-border: #A3D4AE;
+    --green-text: #1E6B34;
+    --red-bg: #FAEAE6;
+    --red-border: #F0A898;
+    --red-text: #A33020;
+    --blue-bg: #E6EEF8;
+    --blue-text: #1A4E8A;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green-text);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .session-badge {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 4px 10px;
+  }
+
+  .main {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .stat-val {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .stat-val.red { color: var(--red-text); }
+  .stat-val.green { color: var(--green-text); }
+
+  .alert {
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    display: none;
+    border: 1px solid;
+  }
+
+  .alert.show { display: flex; align-items: center; gap: 8px; }
+  .alert.red { background: var(--red-bg); border-color: var(--red-border); color: var(--red-text); }
+  .alert.green { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+
+  .alert-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0;
+    background: currentColor;
+    animation: pulse 1.8s infinite;
+  }
+
+  .alert.green .alert-dot { animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .add-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 1.25rem;
+  }
+
+  .add-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-faint);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #4A8CC9;
+    background: #fff;
+  }
+
+  input[type="text"]::placeholder { color: var(--text-faint); }
+
+  .btn {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+  }
+
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-checkin {
+    background: var(--text);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .btn-checkin:hover { background: #333; }
+
+  .filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+
+  .chip {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font);
+    transition: all 0.12s;
+  }
+
+  .chip.active {
+    background: var(--text);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .list { display: flex; flex-direction: column; gap: 7px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    transition: border-color 0.15s;
+  }
+
+  .card.out { border-color: var(--red-border); }
+
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+    font-family: var(--mono);
+  }
+
+  .avatar.out { background: var(--green-bg); color: var(--green-text); }
+  .avatar.in  { background: var(--red-bg);   color: var(--red-text); }
+
+  .card-info { flex: 1; min-width: 0; }
+
+  .card-name {
+    font-size: 14px; font-weight: 600;
+    letter-spacing: -0.1px;
+    color: var(--text);
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--mono);
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+
+  .elapsed {
+    color: var(--red-text);
+    font-weight: 500;
+  }
+
+  .card-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .badge {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 999px; font-weight: 500;
+    font-family: var(--mono);
+  }
+
+  .badge-out { background: var(--green-bg); color: var(--green-text); }
+  .badge-in  { background: var(--red-bg); color: var(--red-text); }
+
+  .btn-sm {
+    height: 30px; padding: 0 12px;
+    font-size: 12px; font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .btn-sm:hover { background: var(--surface2); }
+
+  .btn-return {
+    border-color: var(--green-border);
+    color: var(--green-text);
+  }
+
+  .btn-return:hover { background: var(--green-bg); }
+
+  .btn-remove {
+    border: none; background: none;
+    color: var(--text-faint);
+    font-size: 16px; line-height: 1;
+    cursor: pointer; padding: 0 4px;
+  }
+
+  .btn-remove:hover { color: var(--red-text); }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-faint);
+    font-size: 14px;
+  }
+
+  .footer-export {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 500px) {
+    .main { padding: 1.25rem 1rem 3rem; }
+    header { padding: 0 1rem; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .stat { padding: 10px 12px; }
+    .stat-val { font-size: 22px; }
+    .card-meta { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot" id="status-dot"></div>
+    Participant Tracker
+  </div>
+  <div class="header-right">
+    <span class="session-badge" id="session-time"></span>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-label">Out now</div>
+      <div class="stat-val red" id="stat-out">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Returned</div>
+      <div class="stat-val green" id="stat-in">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total today</div>
+      <div class="stat-val" id="stat-total">0</div>
+    </div>
+  </div>
+
+  <div id="alert" class="alert">
+    <div class="alert-dot"></div>
+    <span id="alert-text"></span>
+  </div>
+
+  <div class="add-section">
+    <div class="add-label">Check in participant</div>
+    <div class="add-row">
+      <input id="p-name" type="text" placeholder="Name or participant ID" />
+      <button class="btn btn-checkin" onclick="addParticipant()">Check in →</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="chip active" id="chip-all" onclick="setFilter('all')">All</button>
+    <button class="chip" id="chip-out" onclick="setFilter('out')">Still out</button>
+    <button class="chip" id="chip-in" onclick="setFilter('in')">Returned</button>
+  </div>
+
+  <div class="list" id="plist"></div>
+
+  <div class="footer-export">
+    <button class="btn" onclick="exportLog()">Export log as CSV</button>
+  </div>
+
+</div>
+
+<script>
+  let participants = [];
+  let filter = 'all';
+
+  document.getElementById('p-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addParticipant();
+  });
+
+  function initials(name) {
+    return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  }
+
+  function elapsed(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm out';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h + 'h ' + (m < 10 ? '0' + m : m) + 'm out';
+  }
+
+  function fmt(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addParticipant() {
+    const name = document.getElementById('p-name').value.trim();
+    if (!name) return;
+    participants.push({ id: Date.now(), name, outAt: Date.now(), inAt: null, status: 'out' });
+    document.getElementById('p-name').value = '';
+    render();
+  }
+
+  function checkOut(id) {
+    const p = participants.find(x => x.id === id);
+    if (p) { p.status = 'in'; p.inAt = Date.now(); }
+    render();
+  }
+
+  function remove(id) {
+    if (!confirm('Remove this participant?')) return;
+    participants = participants.filter(x => x.id !== id);
+    render();
+  }
+
+  function setFilter(f) {
+    filter = f;
+    ['all', 'out', 'in'].forEach(k =>
+      document.getElementById('chip-' + k).classList.toggle('active', k === f)
+    );
+    render();
+  }
+
+  function render() {
+    const out = participants.filter(p => p.status === 'out');
+    const inP = participants.filter(p => p.status === 'in');
+
+    document.getElementById('stat-out').textContent = out.length;
+    document.getElementById('stat-in').textContent = inP.length;
+    document.getElementById('stat-total').textContent = participants.length;
+
+    const dot = document.getElementById('status-dot');
+    dot.style.background = out.length > 0 ? '#A33020' : (participants.length > 0 ? '#1E6B34' : '#1E6B34');
+
+    const alertEl = document.getElementById('alert');
+    const alertText = document.getElementById('alert-text');
+    if (participants.length === 0) {
+      alertEl.className = 'alert';
+    } else if (out.length === 0) {
+      alertEl.className = 'alert green show';
+      alertText.textContent = 'All participants have returned. All devices accounted for.';
+    } else {
+      alertEl.className = 'alert red show';
+      alertText.textContent = out.length + ' still out: ' + out.map(p => p.name).join(', ');
+    }
+
+    let list = participants;
+    if (filter === 'out') list = out;
+    if (filter === 'in') list = inP;
+
+    list = list.slice().sort((a, b) => {
+      if (a.status === 'out' && b.status !== 'out') return -1;
+      if (b.status === 'out' && a.status !== 'out') return 1;
+      return b.id - a.id;
+    });
+
+    const el = document.getElementById('plist');
+    if (list.length === 0) {
+      el.innerHTML = '<div class="empty">' +
+        (participants.length === 0
+          ? 'No participants yet — check someone in above.'
+          : 'No participants in this view.') +
+        '</div>';
+      return;
+    }
+
+    el.innerHTML = list.map(p => `
+      <div class="card ${p.status === 'out' ? 'out' : ''}">
+        <div class="avatar ${p.status}">${initials(p.name)}</div>
+        <div class="card-info">
+          <div class="card-name">${p.name}</div>
+          <div class="card-meta">
+            <span>in ${fmt(p.outAt)}</span>
+            ${p.status === 'in' ? '<span>out ' + fmt(p.inAt) + '</span>' : ''}
+            ${p.status === 'out' ? '<span class="elapsed">' + elapsed(p.outAt) + '</span>' : ''}
+          </div>
+        </div>
+        <div class="card-actions">
+          <span class="badge ${p.status === 'out' ? 'badge-out' : 'badge-in'}">
+            ${p.status === 'out' ? 'out' : 'returned'}
+          </span>
+          ${p.status === 'out'
+            ? `<button class="btn-sm btn-return" onclick="checkOut(${p.id})">Check out</button>`
+            : ''}
+          <button class="btn-remove" onclick="remove(${p.id})" title="Remove">×</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function exportLog() {
+    if (participants.length === 0) { alert('No participants to export.'); return; }
+    const lines = ['Name,Checked in at,Returned at,Status'];
+    participants.forEach(p => {
+      lines.push([
+        p.name,
+        new Date(p.outAt).toLocaleString(),
+        p.inAt ? new Date(p.inAt).toLocaleString() : '',
+        p.status === 'out' ? 'Still out' : 'Returned'
+      ].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'participant-log-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('session-time').textContent =
+      now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) +
+      ' · ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  render();
+  updateClock();
+  setInterval(() => { render(); updateClock(); }, 30000);
+</script>
+</body>
+</html>
